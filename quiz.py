@@ -4,7 +4,6 @@ import time
 import sys
 
 from inspect import currentframe
-from colorama import Fore, Back, Style
 
 lengths = []
 loadedData = {}
@@ -19,7 +18,7 @@ def getLine():
 
 
 def col(code: str) -> str:
-    return code if colorize else ""
+    return code if colorize and "colorama" in sys.modules else ""
 
 
 def loadSet(target: str) -> None:
@@ -263,6 +262,9 @@ if __name__ == '__main__':
     args = sys.argv[1:]
     parsedArgs = parseArgs(args)
     interpreted = interpretArgs(parsedArgs)
+
+    if "noColorize" not in interpreted:
+        from colorama import Fore, Back, Style
 
     start = time.time()
     if "file" in interpreted:
