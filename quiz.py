@@ -25,7 +25,7 @@ def col(code: str) -> str:
 def loadSet(target: str) -> None:
     global lengths
     global loadedData
-    with open(target) as f:
+    with open(target, encoding='utf8') as f:
         data = json.load(f)
         pools = data["pools"]
         loadedData = pools
@@ -200,25 +200,30 @@ def interpretArgs(args: list[list[str]]) -> dict[str, str]:
         if argGroup[0] == "--debug" or argGroup[0] == "-d":
             continue
         elif argGroup[0] == "--clear" or argGroup[0] == "-c":
+            interpreted["toClear"] = True
+        elif argGroup[0] == "--help" or argGroup[0] == "-h":
+            print("Usage: python quiz.py [options]")
+            print("Options:")
+            print("  --help, -h: Display this help message.")
+            print("  --debug, -d: Enable debug mode.")
+            print("  --clear, -c: Clear all scores from the file specified in --file. If --file is not specified, "
+                  "the program will exit.")
+            print("  --file, -f: Load a specific file from a path.")
+            print("  --dir, -D: Set a specific root directory to load files from. If --file is also specified, "
+                  "this will be ignored.")
+            print("  --num-cards, -n: Load a specific number of cards, default is 20.")
+            print("  --no-colorize, -N: Disable colorization.")
+            quit(0)
+        elif argGroup[0] == "--dir" or argGroup[0] == "-D":
             if len(argGroup) < 2:
-                print("FATAL: No file name provided to clear!")
+                print("FATAL: No directory name provided to load!")
                 quit(1)
 
-            fileName = argGroup[1]
+            if not argGroup[1].endswith("/"):
+                argGroup[1] += "/"
 
-            debugPrint("Clearing", fileName, getLine())
-            with open(fileName, "rw") as f:
-                jsonF = json.load(f)
-                pools = jsonF["pools"]
-                for pool in pools:
-                    for card in pool["cards"]:
-                        card["score"] = 0
-
-                jsonF["pools"] = pools
-                json.dump(jsonF, f)
-
-            debugPrint("Cleared", fileName, getLine())
-            quit(0)
+            dirName = argGroup[1]
+            interpreted["dir"] = dirName
         elif argGroup[0] == "--file" or argGroup[0] == "-f":
             if len(argGroup) < 2:
                 print("FATAL: No file name provided to load!")
@@ -265,9 +270,27 @@ if __name__ == '__main__':
     interpreted = interpretArgs(parsedArgs)
 
     start = time.time()
+    # extra argument handling
     if "file" in interpreted:
+        if "toClear" in interpreted:
+            print(col(Fore.YELLOW) + "Clearing scores from", interpreted["file"] + col(Fore.RESET))
+            loadSet(interpreted["file"])
+            for pool in loadedData:
+                for card in pool["cards"]:
+                    card["score"] = 0
+            saveSet(interpreted["file"])
+            print(col(Fore.GREEN) + "Done!" + col(Fore.RESET))
+            quit(0)
         file = interpreted["file"]
         numRandom = interpreted["numCards"] if "numCards" in interpreted else 20
+    elif "dir" in interpreted:
+        dirName = interpreted["dir"]
+        files = [[dirName + "N5.json", 20], [dirName + "N4.json", 10], [dirName + "N3.json", 5]]
+        fileWeights = [0.5, 0.25, 0.125]
+
+        result = random.choices(files, weights=fileWeights, k=1)[0]
+        file = result[0]
+        numRandom = result[1]
     else:
         files = [["N5.json", 20], ["N4.json", 10], ["N3.json", 5]]
         fileWeights = [0.5, 0.25, 0.125]
@@ -275,11 +298,13 @@ if __name__ == '__main__':
         result = random.choices(files, weights=fileWeights, k=1)[0]
         file = result[0]
         numRandom = result[1]
+
     # load the json file
     debugPrint("Loading", file, "with", numRandom, "random cards", getLine())
     print(col(Fore.CYAN), "=========>", file[:-5], f"({numRandom} questions)", "<=========")
     loadSet(file)
 
+    # pick random cards
     randomCards = getCardsRandom(numRandom)
     questions = getQusetions(randomCards)
     debugPrint(questions, getLine())
