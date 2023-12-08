@@ -207,7 +207,7 @@ class QuizSession:
                 print("  --help, -h: Display this help message.")
                 print("  --debug, -d: Enable debug mode.")
                 print("  --clear, -c: Clear all scores from the file specified in --file. If --file is not specified, "
-                      "the program will exit.")
+                      "this will be ignored.")
                 print("  --file, -f: Load a specific file from a path.")
                 print("  --dir, -D: Set a specific root directory to load files from. If --file is also specified, "
                       "this will be ignored.")
@@ -279,7 +279,6 @@ def mainLoop(session: QuizSession, questions: list) -> None:
 
         userAnswer = ""
         isValid = False
-
         while not isValid:
             userAnswer = input(session.col(Fore.CYAN) + "Answer (1-4, n for don't know): " + session.col(Fore.RESET))
             isValid = userAnswer == "q" or userAnswer == "n" or (userAnswer.isdigit() and 1 <= int(userAnswer) <= 4)
