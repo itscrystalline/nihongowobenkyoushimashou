@@ -25,7 +25,7 @@ def col(code: str) -> str:
 def loadSet(target: str) -> None:
     global lengths
     global loadedData
-    with open(target) as f:
+    with open(target, encoding="utf8") as f:
         data = json.load(f)
         pools = data["pools"]
         loadedData = pools
