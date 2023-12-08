@@ -18,12 +18,14 @@ class QuizSession:
         self.lengths = []
         self.loadedData = {}
         self.questions = []
+        self.settings = {}
 
         self.debug = False
         self.colorize = True
 
         parsed = self.parseArgs(args)
         interpreted = self.interpretArgs(parsed)
+        self.settings = interpreted
 
         start = time.time()
         # extra argument handling
@@ -91,8 +93,15 @@ class QuizSession:
             self.debugPrint("Loaded", len(pools), "quiz pools with", sum(self.lengths), "cards total", getLine())
             self.debugPrint("Lengths:", self.lengths, getLine())
 
-    def saveSet(self) -> None:
-        with open(self.loadedFile, "w", encoding='utf8') as opened:
+    def saveSet(self, target=None) -> None:
+        if "dryRun" in self.settings and "toClear" not in self.settings:
+            print(self.col(Fore.YELLOW) + "Dry run enabled, not saving!" + self.col(Fore.RESET))
+            return
+
+        if target is None:
+            target = self.loadedFile
+
+        with open(target, "w", encoding='utf8') as opened:
             toSave = {
                 "pools": self.loadedData
             }
@@ -204,6 +213,7 @@ class QuizSession:
                       "this will be ignored.")
                 print("  --num-cards, -n: Load a specific number of cards, default is 20.")
                 print("  --no-colorize, -N: Disable colorization.")
+                print("  --dry-run: Do not save any changes. If --clear is specified, this will be ignored.")
                 quit(0)
             elif argGroup[0] == "--dir" or argGroup[0] == "-D":
                 if len(argGroup) < 2:
@@ -243,6 +253,9 @@ class QuizSession:
             elif argGroup[0] == "--no-colorize" or argGroup[0] == "-N":
                 interpreted["noColorize"] = True
                 self.colorize = False
+
+            elif argGroup[0] == "--dry-run":
+                interpreted["dryRun"] = True
             else:
                 print("WARNING: Unknown argument:", argGroup[0], "Continuing...")
                 continue
