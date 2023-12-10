@@ -11,7 +11,8 @@ from itertools import combinations
 
 class QuizSession:
 
-    def getLine(self):
+    @staticmethod
+    def getLine():
         cf = currentframe()
         return cf.f_back.f_lineno
 
