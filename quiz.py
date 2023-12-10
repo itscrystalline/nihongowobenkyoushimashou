@@ -157,8 +157,11 @@ class QuizSession:
             for card in pool["cards"]:
                 indices.append(indexCount)
                 indexCount += 1
-                scores.append(1 + ((10 - (card["score"] + 5)) * 0.9))
-        weights = [score / sum(scores) for score in scores]
+                if "reverseWeights" in self.settings:
+                    scores.append(2 + ((card["score"] + 10) * 0.9))
+                else:
+                    scores.append(2 + ((20 - (card["score"] + 10)) * 0.9))
+        weights = [(score / sum(scores)) * 100 for score in scores]
         self.debugPrint("Scores:", scores, getLine())
         self.debugPrint("Weights:", weights, getLine())
         self.debugPrint("Indices:", indices, getLine())
@@ -229,14 +232,14 @@ class QuizSession:
         for argGroup in args:
             if argGroup[0] == "--debug" or argGroup[0] == "-d":
                 continue
-            elif argGroup[0] == "--clear" or argGroup[0] == "-c":
+            elif argGroup[0] == "--clear":
                 interpreted["toClear"] = True
             elif argGroup[0] == "--help" or argGroup[0] == "-h":
                 print("Usage: python quiz.py [options]")
                 print("Options:")
                 print("  --help, -h: Display this help message.")
                 print("  --debug, -d: Enable debug mode.")
-                print("  --clear, -c: Clear all scores from the file specified in --file. If --file is not specified, "
+                print("  --clear: Clear all scores from the file specified in --file. If --file is not specified, "
                       "this will be ignored.")
                 print("  --file, -f: Load a specific file from a path.")
                 print("  --dir, -D: Set a specific root directory to load files from. If --file is also specified, "
@@ -244,6 +247,8 @@ class QuizSession:
                 print("  --num-cards, -n: Load a specific number of cards, default is 20.")
                 print("  --no-colorize, -N: Disable colorization.")
                 print("  --dry-run: Do not save any changes. If --clear is specified, this will be ignored.")
+                print("  --reverse-weights, -r: Reverse the weights for the random card selection. This will make "
+                      "cards with higher scores more likely to be chosen.")
                 quit(0)
             elif argGroup[0] == "--dir" or argGroup[0] == "-D":
                 if len(argGroup) < 2:
@@ -286,6 +291,9 @@ class QuizSession:
 
             elif argGroup[0] == "--dry-run":
                 interpreted["dryRun"] = True
+
+            elif argGroup[0] == "--reverse-weights" or argGroup[0] == "-r":
+                interpreted["reverseWeights"] = True
             else:
                 print("WARNING: Unknown argument:", argGroup[0], "Continuing...")
                 continue
@@ -322,17 +330,21 @@ def mainLoop(session: QuizSession, questions: list) -> None:
             break
 
         if userAnswer == "n":
+            print(session.col(Fore.LIGHTRED_EX), question["score"], "->", question["score"] - 1,
+                  session.col(Fore.RESET))
             print(session.col(Fore.GREEN) + "Correct answer: ", session.col(Style.BRIGHT), correctAnswerIndex, ". ",
                   question["correct"], session.col(Fore.RESET),
                   sep="")
-            question["score"] -= 1
+            if question["score"] > -10:
+                question["score"] -= 1
             session.setCardScore(question["global_index"], question["score"])
             continue
 
         if int(userAnswer) == correctAnswerIndex:
             print(session.col(Fore.LIGHTGREEN_EX) + "Correct!:", question["score"], "->", question["score"] + 1,
                   session.col(Fore.RESET))
-            question["score"] += 1
+            if question["score"] < 10:
+                question["score"] += 1
             session.setCardScore(question["global_index"], question["score"])
             correctAnswers += 1
         else:
@@ -341,7 +353,8 @@ def mainLoop(session: QuizSession, questions: list) -> None:
             print(session.col(Fore.GREEN) + "Correct answer: ", session.col(Style.BRIGHT), correctAnswerIndex, ". ",
                   question["correct"], session.col(Fore.RESET),
                   sep="")
-            question["score"] -= 1
+            if question["score"] > -10:
+                question["score"] -= 1
             session.setCardScore(question["global_index"], question["score"])
 
     print(session.col(Fore.LIGHTYELLOW_EX) + "You answered", correctAnswers, "questions correctly out of",
