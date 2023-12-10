@@ -1,3 +1,4 @@
+import copy
 import json
 import random
 import time
@@ -126,7 +127,14 @@ class QuizSession:
         card["global_index"] = index
         card["local_index"] = index - all_cards
 
-        return card
+        return {
+            "side1": card["side1"],
+            "side2": card["side2"],
+            "score": card["score"],
+            "pool_id": pool_index,
+            "global_index": index,
+            "local_index": index - all_cards,
+        }
 
     def setCardScore(self, index: int, score: int) -> None:
         card = self.getCard(index)
@@ -151,6 +159,7 @@ class QuizSession:
                 indexCount += 1
                 scores.append(1 + ((10 - (card["score"] + 5)) * 0.9))
         weights = [score / sum(scores) for score in scores]
+        self.debugPrint("Scores:", scores, getLine())
         self.debugPrint("Weights:", weights, getLine())
         self.debugPrint("Indices:", indices, getLine())
         randomIndices = random.choices(indices, weights=weights, k=num)
@@ -161,9 +170,12 @@ class QuizSession:
         return cards
 
     def getCardsRandomFromPool(self, pool: int, num: int, excludesLocalIndex: int = None) -> list:
-        cards = self.loadedData[pool]["cards"]
+        cards = copy.deepcopy(self.loadedData[pool]["cards"])
         if excludesLocalIndex is not None:
-            cards = [card for card in cards if card["local_index"] != excludesLocalIndex]
+            for localIndex, card in enumerate(cards):
+                if localIndex == excludesLocalIndex:
+                    cards.remove(card)
+                    break
 
         return random.choices(cards, k=num)
 
@@ -190,7 +202,8 @@ class QuizSession:
                 "answers": answers,
                 "correct": card["side2"],
                 "global_index": card["global_index"],
-                "score": card["score"]
+                "score": card["score"],
+                "original": card
             }
             questionsToReturn.append(question)
 
