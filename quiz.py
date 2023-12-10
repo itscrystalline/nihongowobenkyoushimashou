@@ -213,23 +213,23 @@ class QuizSession:
 
         return questionsToReturn
 
-    def parseArgs(self, args: list) -> list[list[str]]:
+    def interpretArgs(self, args: list[str]) -> dict[str, str]:
         self.debug = "--debug" in args or "-d" in args if len(sys.argv) > 1 else False
         self.debugPrint("Debug mode enabled!", getLine())
         self.debugPrint("Raw Arguments:", args, getLine())
 
         parsedArgs = []
         for arg in args:
+            if arg == "--debug" or arg == "-d":
+                continue
+
             if arg.startswith("-"):
                 parsedArgs.append([arg])
             else:
                 parsedArgs[-1].append(arg)
 
         self.debugPrint("Parsed Arguments:", parsedArgs, getLine())
-        return parsedArgs
 
-    def interpretArgs(self, args: list[str]) -> dict[str, str]:
-        parsedArgs = self.parseArgs(args)
         interpreted = {}
         for argGroup in parsedArgs:
             if argGroup[0] == "--debug" or argGroup[0] == "-d":
