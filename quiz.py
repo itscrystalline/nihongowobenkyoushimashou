@@ -24,31 +24,30 @@ class QuizSession:
         self.lengths = []
         self.loadedData = {}
         self.questions = []
-        self.settings = {}
+        self.interpreted = {}
 
         self.debug = False
         self.colorize = True
 
         parsed = self.parseArgs(args)
-        interpreted = self.interpretArgs(parsed)
-        self.settings = interpreted
+        self.interpreted = self.interpretArgs(parsed)
 
         start = time.time()
         # extra argument handling
-        if "file" in interpreted:
-            if "toClear" in interpreted:
-                print(self.col(Fore.YELLOW) + "Clearing scores from", interpreted["file"] + self.col(Fore.RESET))
-                self.loadSet(interpreted["file"])
+        if "file" in self.interpreted:
+            if "toClear" in self.interpreted:
+                print(self.col(Fore.YELLOW) + "Clearing scores from", self.interpreted["file"] + self.col(Fore.RESET))
+                self.loadSet(self.interpreted["file"])
                 for pool in self.loadedData:
                     for card in pool["cards"]:
                         card["score"] = 0
-                self.saveSet(interpreted["file"])
+                self.saveSet(self.interpreted["file"])
                 print(self.col(Fore.GREEN) + "Done!" + self.col(Fore.RESET))
                 quit(0)
-            file = interpreted["file"]
-            numRandom = interpreted["numCards"] if "numCards" in interpreted else 20
-        elif "dir" in interpreted:
-            dirName = interpreted["dir"]
+            file = self.interpreted["file"]
+            numRandom = self.interpreted["numCards"] if "numCards" in self.interpreted else 20
+        elif "dir" in self.interpreted:
+            dirName = self.interpreted["dir"]
             files = [[dirName + "N5.json", 20], [dirName + "N4.json", 10], [dirName + "N3.json", 5]]
             fileWeights = [0.5, 0.25, 0.125]
 
@@ -100,7 +99,7 @@ class QuizSession:
             self.debugPrint("Lengths:", self.lengths, getLine())
 
     def saveSet(self, target=None) -> None:
-        if "dryRun" in self.settings and "toClear" not in self.settings:
+        if "dryRun" in self.interpreted and "toClear" not in self.interpreted:
             print(self.col(Fore.YELLOW) + "Dry run enabled, not saving!" + self.col(Fore.RESET))
             return
 
@@ -160,7 +159,7 @@ class QuizSession:
             for card in pool["cards"]:
                 indices.append(indexCount)
                 indexCount += 1
-                if "reverseWeights" in self.settings:
+                if "reverseWeights" in self.interpreted:
                     scores.append(2 + ((card["score"] + 10) * 0.9))
                 else:
                     scores.append(2 + ((20 - (card["score"] + 10)) * 0.9))
