@@ -29,7 +29,6 @@ function addToFile({id, level, terms}) {
     if (!term) {
         let pool = {
             id: id,
-            length: terms.length,
             cards: []
         }
         for (var i = 0; i < terms.length; i++) {

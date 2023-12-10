@@ -94,7 +94,7 @@ class QuizSession:
             pools = data["pools"]
             self.loadedData = pools
             for pool in pools:
-                self.lengths.append(pool["length"])
+                self.lengths.append(len(pool["cards"]))
 
             self.debugPrint("Loaded", len(pools), "quiz pools with", sum(self.lengths), "cards total", getLine())
             self.debugPrint("Lengths:", self.lengths, getLine())
@@ -124,7 +124,6 @@ class QuizSession:
                 all_cards -= number_of_cards
                 pool_index = set_index
                 break
-        # debugPrint(pool_index, index, all_cards, getLine())
 
         card = self.loadedData[pool_index]["cards"][index - all_cards]
         card["pool_id"] = pool_index
@@ -165,7 +164,8 @@ class QuizSession:
                     scores.append(2 + ((card["score"] + 10) * 0.9))
                 else:
                     scores.append(2 + ((20 - (card["score"] + 10)) * 0.9))
-        weights = [(score / sum(scores)) * 100 for score in scores]
+        sumScores = sum(scores)
+        weights = [(score / sumScores) * 100 for score in scores]
         self.debugPrint("Scores:", scores, getLine())
         self.debugPrint("Weights:", weights, getLine())
         self.debugPrint("Indices:", indices, getLine())
@@ -210,7 +210,6 @@ class QuizSession:
                 "correct": card["side2"],
                 "global_index": card["global_index"],
                 "score": card["score"],
-                "original": card
             }
             questionsToReturn.append(question)
 
