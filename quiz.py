@@ -276,7 +276,7 @@ class QuizSession:
 
             elif argGroup[0] == "--num-cards" or argGroup[0] == "-n":
                 if len(argGroup) < 2:
-                    print("FATAL: No file name provided to load!")
+                    print("FATAL: No number provided!")
                     quit(1)
 
                 try:
