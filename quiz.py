@@ -5,6 +5,7 @@ import sys
 
 from inspect import currentframe
 from colorama import Fore, Back, Style
+from itertools import combinations
 
 
 def getLine():
@@ -123,13 +124,14 @@ class QuizSession:
         card = self.loadedData[pool_index]["cards"][index - all_cards]
         card["pool_id"] = pool_index
         card["global_index"] = index
+        card["local_index"] = index - all_cards
 
         return card
 
     def setCardScore(self, index: int, score: int) -> None:
         card = self.getCard(index)
         self.debugPrint(card, getLine())
-        localIndex = card["global_index"] - sum(self.lengths[:card["pool_id"]])
+        localIndex = card["local_index"]
         self.debugPrint(localIndex, getLine())
         self.loadedData[card["pool_id"]]["cards"][localIndex] = {
             "side1": card["side1"],
@@ -158,14 +160,29 @@ class QuizSession:
 
         return cards
 
-    def getCardsRandomFromPool(self, pool: int, num: int) -> list:
-        return random.choices(self.loadedData[pool]["cards"], k=num)
+    def getCardsRandomFromPool(self, pool: int, num: int, excludesLocalIndex: int = None) -> list:
+        cards = self.loadedData[pool]["cards"]
+        if excludesLocalIndex is not None:
+            cards = [card for card in cards if card["local_index"] != excludesLocalIndex]
+
+        return random.choices(cards, k=num)
 
     def getQuestions(self, cards: list) -> list:
         questionsToReturn = []
         for card in cards:
             poolId = card["pool_id"]
-            randomInPool = self.getCardsRandomFromPool(poolId, 3)
+            randomInPool = self.getCardsRandomFromPool(poolId, 3, card["local_index"])
+            # filter out duplicates within the random cards
+            isValid = False
+            while not isValid:
+                isValid = True
+                for combo in combinations(randomInPool, 2):
+                    if combo[0]["side2"] == combo[1]["side2"]:
+                        self.debugPrint("Duplicate found:", combo[0]["side2"], "and", combo[1]["side2"], getLine())
+                        randomInPool = self.getCardsRandomFromPool(poolId, 3, card["local_index"])
+                        isValid = False
+                        break
+
             answers = [card["side2"]] + [cardRandom["side2"] for cardRandom in randomInPool]
             random.shuffle(answers)
             question = {
