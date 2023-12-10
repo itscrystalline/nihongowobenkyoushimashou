@@ -209,12 +209,11 @@ def interpretArgs(args: list[list[str]]) -> dict[str, str]:
             debugPrint("Clearing", fileName, getLine())
             with open(fileName, "rw") as f:
                 jsonF = json.load(f)
-                pools = jsonF["pools"]
-                for pool in pools:
+                for pool in jsonF:
                     for card in pool["cards"]:
                         card["score"] = 0
 
-                jsonF["pools"] = pools
+                jsonF["pools"] = pool
                 json.dump(jsonF, f)
 
             debugPrint("Cleared", fileName, getLine())

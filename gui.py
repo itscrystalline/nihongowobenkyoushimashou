@@ -1,17 +1,30 @@
-import gi
+import tkinter as tk
+import time
 
-gi.require_version("Gtk", "4.0")
-from gi.repository import Gtk
+class App(tk.Frame):
+    def __init__(self, master):
+        super().__init__(master)
+        self.pack()
 
+        self.entrythingy = tk.Entry()
+        self.entrythingy.pack()
 
-def on_activate(app):
-    win = Gtk.ApplicationWindow(application=app)
-    btn = Gtk.Button(label="Hello, World!")
-    btn.connect('clicked', lambda x: win.close())
-    win.set_child(btn)
-    win.present()
+        # Create the application variable.
+        self.contents = tk.StringVar()
+        # Set it to some value.
+        self.contents.set("this is a variable")
+        # Tell the entry widget to watch this variable.
+        self.entrythingy["textvariable"] = self.contents
 
+        # Define a callback for when the user hits return.
+        # It prints the current value of the variable.
+        self.entrythingy.bind('<Key-Return>',
+                             self.print_contents)
 
-app = Gtk.Application(application_id='dev.iw2tryhard.nihongowobenkyoushimashou')
-app.connect('activate', on_activate)
-app.run(None)
+    def print_contents(self, event):
+        print("Hi. The current entry content is:",
+              self.contents.get())
+
+root = tk.Tk()
+myapp = App(root)
+myapp.mainloop()
