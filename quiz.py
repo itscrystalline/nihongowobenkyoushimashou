@@ -1,4 +1,3 @@
-import copy
 import json
 import random
 import time
@@ -6,7 +5,6 @@ import sys
 
 from inspect import currentframe
 from colorama import Fore, Back, Style
-from itertools import combinations
 
 
 def getLine():
@@ -16,9 +14,12 @@ def getLine():
 
 class QuizSession:
     def __init__(self, args: list):
+        """
+        Initializes a quiz session.
+        :param args: Command line arguments. See :interpretArgs() for more information.
+        """
         self.loadedFile = ""
-        self.lengths = []
-        self.loadedData = {}
+        self.loadedData = []
         self.questions = []
         self.settings = {}
 
@@ -30,19 +31,24 @@ class QuizSession:
         self.settings = interpreted
 
         start = time.time()
-        # extra argument handling
+        # Extra argument handling
+
+        # Load selected file
         if "file" in interpreted:
+            # Clear score data
             if "toClear" in interpreted:
                 print(self.col(Fore.YELLOW) + "Clearing scores from", interpreted["file"] + self.col(Fore.RESET))
                 self.loadSet(interpreted["file"])
-                for pool in self.loadedData:
-                    for card in pool["cards"]:
-                        card["score"] = 0
+                for card in self.loadedData: # card in cards
+                    card["score"] = 0
                 self.saveSet(interpreted["file"])
                 print(self.col(Fore.GREEN) + "Done!" + self.col(Fore.RESET))
                 quit(0)
             file = interpreted["file"]
-            numRandom = interpreted["numCards"] if "numCards" in interpreted else 20
+            questionAmount = interpreted["numCards"] if "numCards" in interpreted else 20
+
+        # Change path
+        # If dir command exists
         elif "dir" in interpreted:
             dirName = interpreted["dir"]
             files = [[dirName + "N5.json", 20], [dirName + "N4.json", 10], [dirName + "N3.json", 5]]
@@ -50,51 +56,51 @@ class QuizSession:
 
             result = random.choices(files, weights=fileWeights, k=1)[0]
             file = result[0]
-            numRandom = result[1]
+            questionAmount = result[1]
+
+        # Else, normally pathing
         else:
             files = [["N5.json", 20], ["N4.json", 10], ["N3.json", 5]]
             fileWeights = [0.5, 0.25, 0.125]
 
             result = random.choices(files, weights=fileWeights, k=1)[0]
             file = result[0]
-            numRandom = result[1]
+            questionAmount = result[1]
 
-        # load the json file
-        self.debugPrint("Loading", file, "with", numRandom, "random cards", getLine())
-        print(self.col(Fore.CYAN), "=========>", file[:-5], f"({numRandom} questions)", "<=========")
+        # Load the json file
+        self.debugPrint("Loading", file, "with", questionAmount, "random cards", getLine())
+        print(self.col(Fore.CYAN), "=========>", file[:-5], f"({questionAmount} questions)", "<=========")
         self.loadedFile = file
         self.loadSet(file)
 
-        # pick random cards
-        randomCards = self.getCardsRandom(numRandom)
+        # Pick random cards
+        randomCards = self.getCardsRandom(questionAmount)
         self.questions = self.getQuestions(randomCards)
         self.debugPrint(self.questions, getLine())
 
         end = time.time()
         self.debugPrint("Preparation done in", end - start, "ms.", getLine())
 
-    def getLoadedQuestions(self) -> list:
-        return self.questions
-
+    # Give the command line color
     def col(self, code: str) -> str:
         return code if self.colorize else ""
 
+    # Print but debugging
     def debugPrint(self, *args) -> None:
         if self.debug:
             print(f"{self.col(Fore.RED)}[quiz.py:{args[-1]}]{self.col(Fore.YELLOW)}", *args[:-1],
                   self.col(Style.RESET_ALL))
 
+    # Load file, save at self.loadedData
     def loadSet(self, target: str) -> None:
         with open(target, encoding='utf8') as f:
             data = json.load(f)
-            pools = data["pools"]
-            self.loadedData = pools
-            for pool in pools:
-                self.lengths.append(pool["length"])
+            cards: list = data["cards"]
+            self.loadedData = cards
 
-            self.debugPrint("Loaded", len(pools), "quiz pools with", sum(self.lengths), "cards total", getLine())
-            self.debugPrint("Lengths:", self.lengths, getLine())
+            self.debugPrint("Loaded", cards.__len__(), "cards total", getLine())
 
+    # Not saving score
     def saveSet(self, target=None) -> None:
         if "dryRun" in self.settings and "toClear" not in self.settings:
             print(self.col(Fore.YELLOW) + "Dry run enabled, not saving!" + self.col(Fore.RESET))
@@ -105,113 +111,80 @@ class QuizSession:
 
         with open(target, "w", encoding='utf8') as opened:
             toSave = {
-                "pools": self.loadedData
+                "cards": self.loadedData
             }
-            json.dump(toSave, opened, ensure_ascii=False)
+            json.dump(toSave, opened, ensure_ascii=False, indent=4)
 
-    def getCard(self, index: int) -> dict:
-        pool_index: int = 0
-        all_cards: int = 0
-        for set_index, number_of_cards in enumerate(self.lengths):
-            all_cards += number_of_cards
-            if index > all_cards:
-                pass
-            else:
-                all_cards -= number_of_cards
-                pool_index = set_index
-                break
-        # debugPrint(pool_index, index, all_cards, getLine())
-
-        card = self.loadedData[pool_index]["cards"][index - all_cards]
-        card["pool_id"] = pool_index
-        card["global_index"] = index
-        card["local_index"] = index - all_cards
-
+    # Get card from index in cards aka self.loadedData
+    def getCard(self, Index: int) -> dict:
+        # Get card.dictionary
+        card = self.loadedData[Index]
+        # Add index key
         return {
-            "side1": card["side1"],
-            "side2": card["side2"],
+            "word": card["word"],
+            "meaning": card["meaning"],
             "score": card["score"],
-            "pool_id": pool_index,
-            "global_index": index,
-            "local_index": index - all_cards,
+            "index": Index
         }
 
-    def setCardScore(self, index: int, score: int) -> None:
-        card = self.getCard(index)
-        self.debugPrint(card, getLine())
-        localIndex = card["local_index"]
-        self.debugPrint(localIndex, getLine())
-        self.loadedData[card["pool_id"]]["cards"][localIndex] = {
-            "side1": card["side1"],
-            "side2": card["side2"],
-            "score": score
-        }
+    # Set card a new score!
+    def setCardScore(self, Index: int, score: int) -> None:
+        self.loadedData[Index]["score"] = score
 
-    def getCardsRandom(self, num: int) -> list:
-        # weighed random from card scores
+    # Randomly choose the cards
+    def getCardsRandom(self, questionAmount: int) -> list:
+        # Choose cards by weighted scores
         indices = []
+        # Score = [-10,10] in math
         scores = []
-        indexCount = 0
         cards = []
-        for pool in self.loadedData:
-            for card in pool["cards"]:
-                indices.append(indexCount)
-                indexCount += 1
-                if "reverseWeights" in self.settings:
-                    scores.append(2 + ((card["score"] + 10) * 0.9))
-                else:
-                    scores.append(2 + ((20 - (card["score"] + 10)) * 0.9))
-        weights = [(score / sum(scores)) * 100 for score in scores]
+        for index, card in enumerate(self.loadedData):
+            indices.append(index)
+            if "reverseWeights" in self.settings:
+                scores.append(card["score"]*-1 + 0.1)
+            else:
+                scores.append(card["score"] + 0.1)
+        sum_scores = sum(scores)
+        self.debugPrint("sum scores:", sum_scores, getLine())
+        weights = [(score / sum_scores) * 100 for score in scores]
+        del sum_scores
         self.debugPrint("Scores:", scores, getLine())
         self.debugPrint("Weights:", weights, getLine())
         self.debugPrint("Indices:", indices, getLine())
-        randomIndices = random.choices(indices, weights=weights, k=num)
+        randomIndices = random.choices(indices, weights=weights, k=questionAmount)
         self.debugPrint("Random Indices:", randomIndices, getLine())
         for index in randomIndices:
             cards.append(self.getCard(index))
 
         return cards
 
-    def getCardsRandomFromPool(self, pool: int, num: int, excludesLocalIndex: int = None) -> list:
-        cards = copy.deepcopy(self.loadedData[pool]["cards"])
-        if excludesLocalIndex is not None:
-            for localIndex, card in enumerate(cards):
-                if localIndex == excludesLocalIndex:
-                    cards.remove(card)
-                    break
+    # Random fake answers / wrong answers
+    def getRandomCards(self, num: int, excludesIndex: int = None) -> list:
+        cards = self.loadedData.copy()
+        if excludesIndex is not None:
+            cards.pop(excludesIndex)
 
         return random.choices(cards, k=num)
 
     def getQuestions(self, cards: list) -> list:
         questionsToReturn = []
         for card in cards:
-            poolId = card["pool_id"]
-            randomInPool = self.getCardsRandomFromPool(poolId, 3, card["local_index"])
-            # filter out duplicates within the random cards
-            isValid = False
-            while not isValid:
-                isValid = True
-                for combo in combinations(randomInPool, 2):
-                    if combo[0]["side2"] == combo[1]["side2"]:
-                        self.debugPrint("Duplicate found:", combo[0]["side2"], "and", combo[1]["side2"], getLine())
-                        randomInPool = self.getCardsRandomFromPool(poolId, 3, card["local_index"])
-                        isValid = False
-                        break
-
-            answers = [card["side2"]] + [cardRandom["side2"] for cardRandom in randomInPool]
+            wrongCards = self.getRandomCards(3, card["index"])
+            meaningCard = random.choice(card["meaning"])
+            answers = [meaningCard] + [random.choice(cardRandom["meaning"]) for cardRandom in wrongCards]
             random.shuffle(answers)
             question = {
-                "question": card["side1"],
+                "question": card["word"],
                 "answers": answers,
-                "correct": card["side2"],
-                "global_index": card["global_index"],
-                "score": card["score"],
-                "original": card
+                "correct": meaningCard,
+                "index": card["index"],
+                "score": card["score"]
             }
             questionsToReturn.append(question)
 
         return questionsToReturn
 
+    # Command prompt/ Terminal args
     def parseArgs(self, args: list) -> list[list[str]]:
         self.debug = "--debug" in args or "-d" in args if len(sys.argv) > 1 else False
         self.debugPrint("Debug mode enabled!", getLine())
@@ -301,11 +274,20 @@ class QuizSession:
         return interpreted
 
 
-def mainLoop(session: QuizSession, questions: list) -> None:
+def mainLoop(session: QuizSession) -> None:
+    questions = session.questions
+
     correctAnswers = 0
     quitEarly = False
+    totalTime = 0
+    print(session.col(Fore.LIGHTGREEN_EX) + "Ready..." + session.col(Fore.RESET))
+    time.sleep(1)
+    print(session.col(Fore.LIGHTYELLOW_EX) + "Set.." + session.col(Fore.RESET))
+    time.sleep(1)
+    print(session.col(Fore.LIGHTRED_EX) + "GO!" + session.col(Fore.RESET))
+    time.sleep(1)
     for num, question in enumerate(questions):
-        print(session.col(Fore.CYAN), num + 1, "/", len(questions), ". ", session.col(Fore.GREEN),
+        print(session.col(Fore.CYAN), num + 1, "/", len(questions), ". ", session.col(Fore.LIGHTWHITE_EX),
               session.col(Back.BLACK),
               question["question"], " (", question["score"], ")", session.col(Style.RESET_ALL), sep="")
         spaces = " " * (len(str(num + 1)) + 5)
@@ -317,15 +299,24 @@ def mainLoop(session: QuizSession, questions: list) -> None:
 
         userAnswer = ""
         isValid = False
+        timeBonus = time.perf_counter()
         while not isValid:
             userAnswer = input(session.col(Fore.CYAN) + "Answer (1-4, n for don't know): " + session.col(Fore.RESET))
             isValid = userAnswer == "q" or userAnswer == "n" or (userAnswer.isdigit() and 1 <= int(userAnswer) <= 4)
-            print(session.col(Fore.RED) + "Invalid input!" + session.col(Fore.RESET)) if not isValid else None
-
+            print(session.col(Fore.RED) + "Invalid input!" + session.col(Fore.RESET)) if not isValid else None;
+        timeBonus = time.perf_counter() - timeBonus
+        print(session.col(Fore.LIGHTYELLOW_EX) + "You used", timeBonus, "second(s)" + session.col(Fore.RESET))
+        totalTime += timeBonus
+        if timeBonus > 10:
+            timeBonus = 1
+        elif timeBonus < 6:
+            timeBonus = 2
+        else:
+            timeBonus = (16-timeBonus)/5
         if userAnswer == "q":
             print(session.col(Fore.RED) + "You quit early!" + session.col(Fore.RESET))
-            print(session.col(Fore.LIGHTYELLOW_EX) + "You answered", correctAnswers, "questions correctly out of", num,
-                  "question(s)." + session.col(Fore.RESET))
+            print(session.col(Fore.LIGHTYELLOW_EX) + "You used a total of", totalTime, "second(s) to answered", correctAnswers
+          , "questions correctly out of",num,"questions." + session.col(Fore.RESET))
             quitEarly = True
             break
 
@@ -337,37 +328,33 @@ def mainLoop(session: QuizSession, questions: list) -> None:
                   sep="")
             if question["score"] > -10:
                 question["score"] -= 1
-            session.setCardScore(question["global_index"], question["score"])
+            session.setCardScore(question["index"], question["score"])
             continue
 
         if int(userAnswer) == correctAnswerIndex:
-            print(session.col(Fore.LIGHTGREEN_EX) + "Correct!:", question["score"], "->", question["score"] + 1,
+            print(session.col(Fore.LIGHTGREEN_EX) + "Correct!:", question["score"], "->", question["score"] + timeBonus,
                   session.col(Fore.RESET))
             if question["score"] < 10:
-                question["score"] += 1
-            session.setCardScore(question["global_index"], question["score"])
+                question["score"] += timeBonus
+            session.setCardScore(question["index"], question["score"])
             correctAnswers += 1
         else:
-            print(session.col(Fore.LIGHTRED_EX) + "Incorrect!:", question["score"], "->", question["score"] - 1,
+            print(session.col(Fore.LIGHTRED_EX) + "Incorrect!:", question["score"], "->", question["score"] - timeBonus,
                   session.col(Fore.RESET))
             print(session.col(Fore.GREEN) + "Correct answer: ", session.col(Style.BRIGHT), correctAnswerIndex, ". ",
                   question["correct"], session.col(Fore.RESET),
                   sep="")
             if question["score"] > -10:
-                question["score"] -= 1
-            session.setCardScore(question["global_index"], question["score"])
-
-    print(session.col(Fore.LIGHTYELLOW_EX) + "You answered", correctAnswers, "questions correctly out of",
-          len(questions),
-          "questions." + session.col(Fore.RESET)) if not quitEarly else None
+                question["score"] -= timeBonus
+            session.setCardScore(question["index"], question["score"])
+    print(session.col(Fore.LIGHTYELLOW_EX) + "You used a total of", totalTime, "second(s) to answered", correctAnswers
+          , "questions correctly out of",len(questions),"questions." + session.col(Fore.RESET)) if not quitEarly else None
 
 
 if __name__ == '__main__':
     args = sys.argv[1:]
     session = QuizSession(args)
 
-    questions = session.getLoadedQuestions()
-
-    mainLoop(session, questions)
+    mainLoop(session)
 
     session.saveSet()
