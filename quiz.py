@@ -111,7 +111,7 @@ class QuizSession:
             toSave = {
                 "pools": self.loadedData
             }
-            json.dump(toSave, opened, ensure_ascii=False)
+            json.dump(toSave, opened, ensure_ascii=False, indent=4)
 
     def getCard(self, index: int) -> dict:
         pool_index: int = 0
