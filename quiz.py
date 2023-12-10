@@ -252,7 +252,7 @@ class QuizSession:
                 print("  --reverse-weights, -r: Reverse the weights for the random card selection. This will make "
                       "cards with higher scores more likely to be chosen.")
                 quit(0)
-            elif argGroup[0] == "--dir" or argGroup[0] == "-D":
+            elif argGroup[0] in ["--dir", "-D"]:
                 if len(argGroup) < 2:
                     print("FATAL: No directory name provided to load!")
                     quit(1)
@@ -262,7 +262,7 @@ class QuizSession:
 
                 dirName = argGroup[1]
                 interpreted["dir"] = dirName
-            elif argGroup[0] == "--file" or argGroup[0] == "-f":
+            elif argGroup[0] in ["--file", "-f"]:
                 if len(argGroup) < 2:
                     print("FATAL: No file name provided to load!")
                     quit(1)
@@ -274,7 +274,7 @@ class QuizSession:
                 fileName = argGroup[1]
                 interpreted["file"] = fileName
 
-            elif argGroup[0] == "--num-cards" or argGroup[0] == "-n":
+            elif argGroup[0] in ["--num-cards", "-n"]:
                 if len(argGroup) < 2:
                     print("FATAL: No number provided!")
                     quit(1)
@@ -287,14 +287,11 @@ class QuizSession:
 
                 interpreted["numCards"] = numCards
 
-            elif argGroup[0] == "--no-colorize" or argGroup[0] == "-N":
-                interpreted["noColorize"] = True
+            elif argGroup[0] in ["--no-colorize", "-N"]:
                 self.colorize = False
-
             elif argGroup[0] == "--dry-run":
                 interpreted["dryRun"] = True
-
-            elif argGroup[0] == "--reverse-weights" or argGroup[0] == "-r":
+            elif argGroup[0] in ["--reverse-weights", "-r"]:
                 interpreted["reverseWeights"] = True
             else:
                 print("WARNING: Unknown argument:", argGroup[0], "Continuing...")
