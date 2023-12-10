@@ -311,7 +311,7 @@ def mainLoop(session: QuizSession) -> None:
     correctAnswers = 0
     quitEarly = False
     for num, question in enumerate(questions):
-        print(session.col(Fore.CYAN), num + 1, "/", len(questions), ". ", session.col(Fore.GREEN),
+        print(session.col(Fore.CYAN), num + 1, "/", len(questions), ". ", session.col(Fore.LIGHTWHITE_EX),
               session.col(Back.BLACK),
               question["question"], " (", question["score"], ")", session.col(Style.RESET_ALL), sep="")
         spaces = " " * (len(str(num + 1)) + 5)
