@@ -16,6 +16,10 @@ def getLine():
 
 class QuizSession:
     def __init__(self, args: list):
+        """
+        Initializes a quiz session.
+        :param args: Command line arguments. See :interpretArgs() for more information.
+        """
         self.loadedFile = ""
         self.lengths = []
         self.loadedData = {}
@@ -301,7 +305,10 @@ class QuizSession:
         return interpreted
 
 
-def mainLoop(session: QuizSession, questions: list) -> None:
+def mainLoop(session: QuizSession) -> None:
+    questions = session.getLoadedQuestions()
+    # ik session.questions work but fuck you, getters ftw!!!!!!!!!!! /s
+
     correctAnswers = 0
     quitEarly = False
     for num, question in enumerate(questions):
@@ -366,8 +373,6 @@ if __name__ == '__main__':
     args = sys.argv[1:]
     session = QuizSession(args)
 
-    questions = session.getLoadedQuestions()
-
-    mainLoop(session, questions)
+    mainLoop(session)
 
     session.saveSet()
