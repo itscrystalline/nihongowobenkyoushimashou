@@ -29,8 +29,7 @@ class QuizSession:
         self.debug = False
         self.colorize = True
 
-        parsed = self.parseArgs(args)
-        self.interpreted = self.interpretArgs(parsed)
+        self.interpreted = self.interpretArgs(args)
 
         start = time.time()
         # extra argument handling
@@ -229,9 +228,10 @@ class QuizSession:
         self.debugPrint("Parsed Arguments:", parsedArgs, getLine())
         return parsedArgs
 
-    def interpretArgs(self, args: list[list[str]]) -> dict[str, str]:
+    def interpretArgs(self, args: list[str]) -> dict[str, str]:
+        parsedArgs = self.parseArgs(args)
         interpreted = {}
-        for argGroup in args:
+        for argGroup in parsedArgs:
             if argGroup[0] == "--debug" or argGroup[0] == "-d":
                 continue
             elif argGroup[0] == "--clear":
