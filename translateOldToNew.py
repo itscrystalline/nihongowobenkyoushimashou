@@ -4,7 +4,7 @@ files = ["old_json_file/N5.json","old_json_file/N4.json","old_json_file/N3.json"
 saves = ["new_json_file/N5.json","new_json_file/N4.json","new_json_file/N3.json"]
 alphabet = ["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z"]
 
-# This file is super hard-coding, you must optimize it yourself in order run property.
+# This file is super hard-coding, you must optimize it yourself in order to run properly.
 # Thus, this code will take forever to run. (O(n^5))
 
 for file_index in range(0,3):
