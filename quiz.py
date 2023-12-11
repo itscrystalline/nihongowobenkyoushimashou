@@ -112,13 +112,11 @@ class QuizSession:
         pool_index: int = 0
         all_cards: int = 0
         for set_index, number_of_cards in enumerate(self.lengths):
-            all_cards += number_of_cards
-            if index > all_cards:
-                pass
-            else:
-                all_cards -= number_of_cards
+            if index < all_cards + number_of_cards:
                 pool_index = set_index
                 break
+            else:
+                all_cards += number_of_cards
 
         card = self.loadedData[pool_index]["cards"][index - all_cards]
         card["pool_id"] = pool_index
