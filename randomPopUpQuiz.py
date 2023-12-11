@@ -85,7 +85,7 @@ class QuizSession:
     # Print but debugging
     def debugPrint(self, *args) -> None:
         if self.debug:
-            print(f"{self.col(Fore.RED)}[quiz.py:{args[-1]}]{self.col(Fore.YELLOW)}", *args[:-1],
+            print(f"{self.col(Fore.RED)}[randomPopUpQuiz.py:{args[-1]}]{self.col(Fore.YELLOW)}", *args[:-1],
                   self.col(Style.RESET_ALL))
 
     # Load file, save at self.loadedData
@@ -197,7 +197,7 @@ class QuizSession:
             else:
                 interpreted["toClear"] = False
             if argGroup in ["--help", "-h"]:
-                print("Usage: python quiz.py [options]")
+                print("Usage: python randomPopUpQuiz.py [options]")
                 print("Options:")
                 print("  --help, -h: Display this help message.")
                 print("  --debug, -d: Enable debug mode.")
