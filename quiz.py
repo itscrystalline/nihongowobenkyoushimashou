@@ -9,12 +9,12 @@ from colorama import Fore, Back, Style
 from itertools import combinations
 
 
-class QuizSession:
+def getLine():
+    cf = currentframe()
+    return cf.f_back.f_lineno
 
-    @staticmethod
-    def getLine():
-        cf = currentframe()
-        return cf.f_back.f_lineno
+
+class QuizSession:
 
     def __init__(self, args: list):
         self.loadedFile = ""
@@ -59,7 +59,7 @@ class QuizSession:
             numRandom = result[1]
 
         # load the json file
-        self.debugPrint("Loading", file, "with", numRandom, "random cards", self.getLine())
+        self.debugPrint("Loading", file, "with", numRandom, "random cards", getLine())
         print(self.col(Fore.CYAN), "=========>", file[:-5], f"({numRandom} questions)", "<=========")
         self.loadedFile = file
         self.loadSet(file)
@@ -67,10 +67,10 @@ class QuizSession:
         # pick random cards
         randomCards = self.getCardsRandom(numRandom)
         self.questions = self.getQuestions(randomCards)
-        self.debugPrint(self.questions, self.getLine())
+        self.debugPrint(self.questions, getLine())
 
         end = time.time()
-        self.debugPrint("Preparation done in", end - start, "ms.", self.getLine())
+        self.debugPrint("Preparation done in", end - start, "ms.", getLine())
 
     def getLoadedQuestions(self) -> list:
         return self.questions
@@ -91,8 +91,8 @@ class QuizSession:
             for pool in pools:
                 self.lengths.append(len(pool["cards"]))
 
-            self.debugPrint("Loaded", len(pools), "quiz pools with", sum(self.lengths), "cards total", self.getLine())
-            self.debugPrint("Lengths:", self.lengths, self.getLine())
+            self.debugPrint("Loaded", len(pools), "quiz pools with", sum(self.lengths), "cards total", getLine())
+            self.debugPrint("Lengths:", self.lengths, getLine())
 
     def saveSet(self, target=None) -> None:
         if "dryRun" in self.interpreted and "toClear" not in self.interpreted:
@@ -134,9 +134,9 @@ class QuizSession:
 
     def setCardScore(self, index: int, score: int) -> None:
         card = self.getCard(index)
-        self.debugPrint(card, self.getLine())
+        self.debugPrint(card, getLine())
         localIndex = card["local_index"]
-        self.debugPrint(localIndex, self.getLine())
+        self.debugPrint(localIndex, getLine())
         self.loadedData[card["pool_id"]]["cards"][localIndex] = {
             "side1": card["side1"],
             "side2": card["side2"],
@@ -159,11 +159,11 @@ class QuizSession:
                     scores.append(2 + ((20 - (card["score"] + 10)) * 0.9))
         sumScores = sum(scores)
         weights = [(score / sumScores) * 100 for score in scores]
-        self.debugPrint("Scores:", scores, self.getLine())
-        self.debugPrint("Weights:", weights, self.getLine())
-        self.debugPrint("Indices:", indices, self.getLine())
+        self.debugPrint("Scores:", scores, getLine())
+        self.debugPrint("Weights:", weights, getLine())
+        self.debugPrint("Indices:", indices, getLine())
         randomIndices = random.choices(indices, weights=weights, k=num)
-        self.debugPrint("Random Indices:", randomIndices, self.getLine())
+        self.debugPrint("Random Indices:", randomIndices, getLine())
         for index in randomIndices:
             cards.append(self.getCard(index))
 
@@ -190,7 +190,7 @@ class QuizSession:
                 isValid = True
                 for combo in combinations(randomInPool, 2):
                     if combo[0]["side2"] == combo[1]["side2"]:
-                        self.debugPrint("Duplicate found:", combo[0]["side2"], "and", combo[1]["side2"], self.getLine())
+                        self.debugPrint("Duplicate found:", combo[0]["side2"], "and", combo[1]["side2"], getLine())
                         randomInPool = self.getCardsRandomFromPool(poolId, 3, card["local_index"])
                         isValid = False
                         break
@@ -210,8 +210,8 @@ class QuizSession:
 
     def interpretArgs(self, args: list[str]) -> dict[str, str]:
         self.debug = "--debug" in args or "-d" in args if len(sys.argv) > 1 else False
-        self.debugPrint("Debug mode enabled!", self.getLine())
-        self.debugPrint("Raw Arguments:", args, self.getLine())
+        self.debugPrint("Debug mode enabled!", getLine())
+        self.debugPrint("Raw Arguments:", args, getLine())
 
         parsedArgs = []
         for arg in args:
@@ -223,7 +223,7 @@ class QuizSession:
             else:
                 parsedArgs[-1].append(arg)
 
-        self.debugPrint("Parsed Arguments:", parsedArgs, self.getLine())
+        self.debugPrint("Parsed Arguments:", parsedArgs, getLine())
 
         interpreted = {}
         for argGroup in parsedArgs:
