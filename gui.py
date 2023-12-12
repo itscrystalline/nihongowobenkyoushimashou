@@ -54,6 +54,12 @@ class MainWindow(Gtk.ApplicationWindow):
         self.answerButton.connect("clicked", self.dontKnow)
         header.pack_start(self.answerButton)
 
+        returnButton = Gtk.Button()
+        returnButton.set_icon_name("view-refresh-symbolic")
+        returnButton.set_tooltip_text("Return to current question")
+        returnButton.connect("clicked", lambda _: self.scrollToCurrent())
+        header.pack_start(returnButton)
+
         toastOverlay = Adw.ToastOverlay()
         toastOverlay.set_hexpand(True)
         toastOverlay.set_vexpand(True)
@@ -82,7 +88,7 @@ class MainWindow(Gtk.ApplicationWindow):
         self.endBox.set_icon_name("dialog-warning-symbolic")
 
         self.endButton = Gtk.Button()
-        self.endButton.set_label("Return to test")
+        self.endButton.set_label("Return to quiz")
         self.endButton.set_css_classes(["suggested-action", "pill", "endButton"])
         self.endButton.connect("clicked", lambda _: self.scrollToCurrent())
         self.endButton.set_halign(Gtk.Align.CENTER)
@@ -186,6 +192,7 @@ class MainWindow(Gtk.ApplicationWindow):
         self.tryUpdateEndScreen()
 
     def dontKnow(self, button: Gtk.Button):
+        self.scrollToCurrent()
         currentPage = self.view.get_nth_page(self.currentQuestion)
         self.scoreDisplayTracker[self.currentQuestion][0] -= 1
         self.scoreDisplayTracker[self.currentQuestion][1].add_css_class("incorrect")
@@ -227,5 +234,6 @@ if __name__ == '__main__':
     args = sys.argv[1:]
     session = quiz.QuizSession(args)
 
-    app = NihongoWoBenkyoushimashouApplication(session=session, application_id="dev.iw2tryhard.nihongowobenkyoushimashou")
+    app = NihongoWoBenkyoushimashouApplication(session=session,
+                                               application_id="dev.iw2tryhard.nihongowobenkyoushimashou")
     app.run([])
