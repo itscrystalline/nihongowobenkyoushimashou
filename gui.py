@@ -212,7 +212,7 @@ class MainWindow(Gtk.ApplicationWindow):
         self.get_application().quit()
 
 
-class MyApp(Adw.Application):
+class NihongoWoBenkyoushimashouApplication(Adw.Application):
     def __init__(self, session: quiz.QuizSession, **kwargs):
         super().__init__(**kwargs)
         self.session = session
@@ -227,5 +227,5 @@ if __name__ == '__main__':
     args = sys.argv[1:]
     session = quiz.QuizSession(args)
 
-    app = MyApp(session=session, application_id="dev.iw2tryhard.nihongowobenkyoushimashou")
+    app = NihongoWoBenkyoushimashouApplication(session=session, application_id="dev.iw2tryhard.nihongowobenkyoushimashou")
     app.run([])
