@@ -98,6 +98,8 @@ class MainWindow(Gtk.ApplicationWindow):
 
         box.append(carouselDots)
 
+        self.connect('close-request', lambda _: session.saveSet())
+
     def buildViews(self):
         carousel = self.view
 
