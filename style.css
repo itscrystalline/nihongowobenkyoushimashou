@@ -29,3 +29,6 @@
 
 .scoreText.incorrect {
   color: #c01c28; }
+
+.endButton {
+  max-width: 0.5rem; }

@@ -25,19 +25,20 @@ class MainWindow(Gtk.ApplicationWindow):
         self.session = session
         self.debug = session.debug
 
-        self.progress = []
+        self.scoreDisplayTracker = []
         self.currentQuestion = 0
+        self.correctAnswers = 0
 
         # populate progress
         for i in range(len(self.session.questions)):
-            self.progress.append([False, self.session.questions[i]["score"]])
+            self.scoreDisplayTracker.append([self.session.questions[i]["score"]])
 
         css_provider = Gtk.CssProvider()
         css_provider.load_from_path('style.css')
         Gtk.StyleContext.add_provider_for_display(Gdk.Display.get_default(), css_provider,
                                                   Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
 
-        self.set_default_size(600, 250)
+        self.set_default_size(800, 475)
         self.set_title(f"日本語を勉強しましょう! [{self.session.loadedFile}]")
 
         app = self.get_application()
@@ -47,15 +48,11 @@ class MainWindow(Gtk.ApplicationWindow):
         header = Gtk.HeaderBar()
         self.set_titlebar(header)
 
-        self.settingsButton = Gtk.Button()
-        self.settingsButton.set_icon_name("preferences-system-symbolic")
-        self.settingsButton.set_tooltip_text("Settings")
-        header.pack_start(self.settingsButton)
-
         self.answerButton = Gtk.Button()
         self.answerButton.set_icon_name("dialog-question-symbolic")
         self.answerButton.set_tooltip_text("Don't know")
-        header.pack_end(self.answerButton)
+        self.answerButton.connect("clicked", self.dontKnow)
+        header.pack_start(self.answerButton)
 
         toastOverlay = Adw.ToastOverlay()
         toastOverlay.set_hexpand(True)
@@ -75,7 +72,23 @@ class MainWindow(Gtk.ApplicationWindow):
         carouselDots = Adw.CarouselIndicatorDots()
         carouselDots.set_carousel(self.view)
 
+        # question screens
         self.buildViews()
+
+        # end screen
+        self.endBox = Adw.StatusPage()
+        self.endBox.set_title("Quiz not done!")
+        self.endBox.set_description(f"Finish the quiz to see your score!")
+        self.endBox.set_icon_name("dialog-warning-symbolic")
+
+        self.endButton = Gtk.Button()
+        self.endButton.set_label("Return to test")
+        self.endButton.set_css_classes(["suggested-action", "pill", "endButton"])
+        self.endButton.connect("clicked", lambda _: self.scrollToCurrent())
+        self.endButton.set_halign(Gtk.Align.CENTER)
+
+        self.endBox.set_child(self.endButton)
+        self.view.append(self.endBox)
 
         box.append(carouselDots)
 
@@ -84,9 +97,9 @@ class MainWindow(Gtk.ApplicationWindow):
 
         for index, question in enumerate(self.session.questions):
             scoreText = Gtk.Label()
-            scoreText.set_text(f"Score: {self.progress[index][1]}")
+            scoreText.set_text(f"Score: {self.scoreDisplayTracker[index][0]}")
             scoreText.add_css_class("scoreText")
-            self.progress[index].append(scoreText)
+            self.scoreDisplayTracker[index].append(scoreText)
 
             questionText = Gtk.Label()
             questionText.set_text(question["question"])
@@ -97,10 +110,13 @@ class MainWindow(Gtk.ApplicationWindow):
             questionBox = Gtk.Box()
             questionBox.set_orientation(Gtk.Orientation.VERTICAL)
             questionBox.add_css_class("question-box")
+            questionBox.set_vexpand(True)
+            questionBox.set_valign(Gtk.Align.CENTER)
 
             answerBox = Gtk.Box()
             answerBox.set_orientation(Gtk.Orientation.HORIZONTAL)
             answerBox.add_css_class("answer-box")
+            answerBox.set_vexpand(True)
 
             answerGrid = Gtk.Grid()
             answerGrid.set_column_homogeneous(True)
@@ -116,7 +132,7 @@ class MainWindow(Gtk.ApplicationWindow):
                 button.set_hexpand(True)
                 button.set_vexpand(True)
                 button.add_css_class("answer-button")
-                button.connect("clicked", self.on_answer_button_clicked)
+                button.connect("clicked", self.onAnswerButtonClicked)
 
                 if question["answers"][i] == question["correct"]:
                     button.add_css_class("correct")
@@ -139,39 +155,61 @@ class MainWindow(Gtk.ApplicationWindow):
 
             carousel.append(mainBox)
 
-            self.debugPrint("progress", self.progress, getLine())
+            self.debugPrint("progress", self.scoreDisplayTracker, getLine())
 
-    def on_answer_button_clicked(self, button: Gtk.Button):
+    def onAnswerButtonClicked(self, button: Gtk.Button):
         currentPage = self.view.get_position()
         if currentPage != self.currentQuestion:
-            self.view.scroll_to(self.view.get_nth_page(self.currentQuestion), True)
+            self.scrollToCurrent()
             self.debugPrint("Scrolling to page", self.currentQuestion, getLine())
-            return
-
-        isDone = self.progress[self.currentQuestion][0]
-        if isDone:
-            self.advance()
-            self.debugPrint("Already answered, advancing", getLine())
             return
 
         correctAnswer = self.session.questions[self.currentQuestion]["correct"]
         if button.get_name() == correctAnswer:
-            self.progress[self.currentQuestion][0] = True
-            self.progress[self.currentQuestion][1] += 1
-            self.progress[self.currentQuestion][2].add_css_class("correct")
+            self.scoreDisplayTracker[self.currentQuestion][0] += 1
+            self.scoreDisplayTracker[self.currentQuestion][1].add_css_class("correct")
+            self.correctAnswers += 1
         else:
-            self.progress[self.currentQuestion][0] = True
-            self.progress[self.currentQuestion][1] -= 1
-            self.progress[self.currentQuestion][2].add_css_class("incorrect")
+            self.scoreDisplayTracker[self.currentQuestion][0] -= 1
+            self.scoreDisplayTracker[self.currentQuestion][1].add_css_class("incorrect")
             button.add_css_class("incorrect")
+
+        self.session.setCardScore(self.session.questions[self.currentQuestion]["global_index"],
+                                  self.scoreDisplayTracker[self.currentQuestion][0])
 
         button.get_parent().add_css_class("answered")
 
-        self.progress[self.currentQuestion][2].set_text(f"Score: {self.progress[self.currentQuestion][1]}")
+        self.scoreDisplayTracker[self.currentQuestion][1].set_text(
+            f"Score: {self.scoreDisplayTracker[self.currentQuestion][0]}")
         self.currentQuestion += 1
 
-    def advance(self):
+        self.tryUpdateEndScreen()
+
+    def dontKnow(self, button: Gtk.Button):
+        currentPage = self.view.get_nth_page(self.currentQuestion)
+        self.scoreDisplayTracker[self.currentQuestion][0] -= 1
+        self.scoreDisplayTracker[self.currentQuestion][1].add_css_class("incorrect")
+        currentPage.get_last_child().get_last_child().add_css_class("answered")
+        self.scoreDisplayTracker[self.currentQuestion][1].set_text(
+            f"Score: {self.scoreDisplayTracker[self.currentQuestion][0]}")
+        self.currentQuestion += 1
+
+        self.tryUpdateEndScreen()
+
+    def scrollToCurrent(self):
         self.view.scroll_to(self.view.get_nth_page(self.currentQuestion), True)
+
+    def tryUpdateEndScreen(self):
+        if self.currentQuestion == len(self.session.questions):
+            self.endBox.set_description(f"You got {self.correctAnswers} out of {len(self.session.questions)} correct!")
+            self.endBox.set_title("Quiz done!")
+            self.endBox.set_icon_name("dialog-information-symbolic")
+            self.endButton.set_label("Exit")
+            self.endButton.connect("clicked", self.saveAndQuit)
+
+    def saveAndQuit(self, button: Gtk.Button):
+        self.session.saveSet()
+        self.get_application().quit()
 
 
 class MyApp(Adw.Application):
