@@ -13,6 +13,10 @@
       font-size: 1.1rem; }
     .answer-grid > button:hover {
       box-shadow: inset 0 0 0 2px #78aeed; }
+  .answer-grid.answered > button {
+    color: #c7c7c7; }
+    .answer-grid.answered > button:hover {
+      box-shadow: none; }
   .answer-grid.answered > .correct {
     box-shadow: inset 0 0 0 2px #8ff0a4;
     background-color: #26a269; }
