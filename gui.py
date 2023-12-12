@@ -107,7 +107,7 @@ class MainWindow(Gtk.ApplicationWindow):
             answerGrid.set_row_homogeneous(True)
             answerGrid.set_hexpand(True)
             answerGrid.set_vexpand(True)
-            answerBox.add_css_class("answer-grid")
+            answerGrid.add_css_class("answer-grid")
 
             for i in range(4):
                 button = Gtk.Button()
@@ -119,7 +119,7 @@ class MainWindow(Gtk.ApplicationWindow):
                 button.connect("clicked", self.on_answer_button_clicked)
 
                 if question["answers"][i] == question["correct"]:
-                    self.progress[index].append(button)
+                    button.add_css_class("correct")
 
                 answerGrid.attach(button, i % 2, i // 2, 1, 1)
 
@@ -159,12 +159,13 @@ class MainWindow(Gtk.ApplicationWindow):
             self.progress[self.currentQuestion][0] = True
             self.progress[self.currentQuestion][1] += 1
             self.progress[self.currentQuestion][2].add_css_class("correct")
-            button.add_css_class("correct")
         else:
             self.progress[self.currentQuestion][0] = True
             self.progress[self.currentQuestion][1] -= 1
             self.progress[self.currentQuestion][2].add_css_class("incorrect")
             button.add_css_class("incorrect")
+
+        button.get_parent().add_css_class("answered")
 
         self.progress[self.currentQuestion][2].set_text(f"Score: {self.progress[self.currentQuestion][1]}")
         self.currentQuestion += 1

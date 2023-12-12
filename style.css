@@ -7,22 +7,22 @@
 
 .answer-grid {
   padding: 5px; }
-  .answer-grid > * > button {
+  .answer-grid > button {
     margin: 2px; }
-    .answer-grid > * > button > label {
+    .answer-grid > button > label {
       font-size: 1.1rem; }
-    .answer-grid > * > button:hover {
+    .answer-grid > button:hover {
       box-shadow: inset 0 0 0 2px #78aeed; }
-    .answer-grid > * > button.correct {
-      box-shadow: inset 0 0 0 2px #8ff0a4;
-      background-color: #26a269; }
-      .answer-grid > * > button.correct:hover {
-        box-shadow: inset 0 0 0 2px #8ff0a4; }
-    .answer-grid > * > button.incorrect {
-      box-shadow: inset 0 0 0 2px #ff7b63;
-      background-color: #c01c28; }
-      .answer-grid > * > button.incorrect:hover {
-        box-shadow: inset 0 0 0 2px #ff7b63; }
+  .answer-grid.answered > .correct {
+    box-shadow: inset 0 0 0 2px #8ff0a4;
+    background-color: #26a269; }
+    .answer-grid.answered > .correct:hover {
+      box-shadow: inset 0 0 0 2px #8ff0a4; }
+  .answer-grid.answered > .incorrect {
+    box-shadow: inset 0 0 0 2px #ff7b63;
+    background-color: #c01c28; }
+    .answer-grid.answered > .incorrect:hover {
+      box-shadow: inset 0 0 0 2px #ff7b63; }
 
 .scoreText.correct {
   color: #26a269; }

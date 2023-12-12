@@ -9,7 +9,7 @@
 .answer-grid
   padding: 5px
 
-  & > * > button
+  & > button
     margin: 2px
 
     & > label
@@ -18,17 +18,18 @@
     &:hover
       box-shadow: inset 0 0 0 2px #78aeed
 
-    &.correct
+  &.answered
+    & > .correct
       box-shadow: inset 0 0 0 2px #8ff0a4
       background-color: #26a269
       &:hover
-          box-shadow: inset 0 0 0 2px #8ff0a4
+        box-shadow: inset 0 0 0 2px #8ff0a4
 
-    &.incorrect
+    & > .incorrect
+      box-shadow: inset 0 0 0 2px #ff7b63
+      background-color: #c01c28
+      &:hover
         box-shadow: inset 0 0 0 2px #ff7b63
-        background-color: #c01c28
-        &:hover
-          box-shadow: inset 0 0 0 2px #ff7b63
 
 .scoreText
   &.correct
