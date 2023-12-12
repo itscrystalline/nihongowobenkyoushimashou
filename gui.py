@@ -117,10 +117,13 @@ class MainWindow(Gtk.ApplicationWindow):
                 button.set_vexpand(True)
                 button.add_css_class("answer-button")
                 button.connect("clicked", self.on_answer_button_clicked)
+
+                if question["answers"][i] == question["correct"]:
+                    self.progress[index].append(button)
+
                 answerGrid.attach(button, i % 2, i // 2, 1, 1)
 
             mainBox = Gtk.Box()
-            mainBox.set_data()
             mainBox.set_orientation(Gtk.Orientation.VERTICAL)
             mainBox.set_hexpand(True)
 
@@ -135,6 +138,8 @@ class MainWindow(Gtk.ApplicationWindow):
             mainBox.set_name(f"{index}")
 
             carousel.append(mainBox)
+
+            self.debugPrint("progress", self.progress, getLine())
 
     def on_answer_button_clicked(self, button: Gtk.Button):
         currentPage = self.view.get_position()
@@ -160,10 +165,6 @@ class MainWindow(Gtk.ApplicationWindow):
             self.progress[self.currentQuestion][1] -= 1
             self.progress[self.currentQuestion][2].add_css_class("incorrect")
             button.add_css_class("incorrect")
-            # show correct answer
-            for correct in button.get_parent().get_child():
-                if correct.get_name() == correctAnswer:
-                    correct.add_css_class("correct")
 
         self.progress[self.currentQuestion][2].set_text(f"Score: {self.progress[self.currentQuestion][1]}")
         self.currentQuestion += 1
