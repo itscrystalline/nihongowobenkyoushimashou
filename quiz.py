@@ -52,7 +52,7 @@ class QuizSession:
             numRandom = result[1]
         else:
             files = [["N5.json", 20], ["N4.json", 10], ["N3.json", 5]]
-            fileWeights = [0.5, 0.25, 0.125]
+            fileWeights = [0.25, 0.5, 0.125]
 
             result = random.choices(files, weights=fileWeights, k=1)[0]
             file = result[0]
@@ -126,6 +126,8 @@ class QuizSession:
         return {
             "side1": card["side1"],
             "side2": card["side2"],
+            "side1image": card["side1image"] if "side1image" in card else "",
+            "side2image": card["side2image"] if "side2image" in card else "",
             "score": card["score"],
             "pool_id": pool_index,
             "global_index": index,
@@ -140,6 +142,8 @@ class QuizSession:
         self.loadedData[card["pool_id"]]["cards"][localIndex] = {
             "side1": card["side1"],
             "side2": card["side2"],
+            "side1image": card["side1image"] if "side1image" in card else "",
+            "side2image": card["side2image"] if "side2image" in card else "",
             "score": score
         }
 
@@ -189,18 +193,24 @@ class QuizSession:
             while not isValid:
                 isValid = True
                 for combo in combinations(randomInPool, 2):
-                    if combo[0]["side2"] == combo[1]["side2"]:
+                    imagesEqual = \
+                        (combo[0]["side2image"] == combo[1]["side2image"]) \
+                            if "side2image" in combo[0] and "side2image" in combo[1] else True
+                    if combo[0]["side2"] == combo[1]["side2"] and imagesEqual:
                         self.debugPrint("Duplicate found:", combo[0]["side2"], "and", combo[1]["side2"], getLine())
                         randomInPool = self.getCardsRandomFromPool(poolId, 3, card["local_index"])
                         isValid = False
                         break
 
-            answers = [card["side2"]] + [cardRandom["side2"] for cardRandom in randomInPool]
+            answers = ([[card["side2"], card["side2image"] if "side2image" in card else ""]]
+                       + [[cardRandom["side2"], cardRandom["side2image"] if "side2image" in cardRandom else ""]
+                          for cardRandom in randomInPool])
             random.shuffle(answers)
             question = {
                 "question": card["side1"],
+                "question_image": card["side1image"] if "side1image" in card else "",
                 "answers": answers,
-                "correct": card["side2"],
+                "correct": [card["side2"], card["side2image"] if "side2image" in card else ""],
                 "global_index": card["global_index"],
                 "score": card["score"],
             }

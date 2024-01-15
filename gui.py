@@ -6,7 +6,7 @@ import quiz
 
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
-from gi.repository import Gtk, Adw, Gdk
+from gi.repository import Gtk, Adw, Gdk, GdkPixbuf
 from colorama import Fore, Style
 
 
@@ -135,8 +135,7 @@ class MainWindow(Gtk.ApplicationWindow):
 
             for i in range(4):
                 button = Gtk.Button()
-                button.set_name(question["answers"][i])
-                button.set_label(question["answers"][i])
+                button.set_name(question["answers"][i][0] + "|" + question["answers"][i][1])
                 button.set_hexpand(True)
                 button.set_vexpand(True)
                 button.add_css_class("answer-button")
@@ -144,6 +143,13 @@ class MainWindow(Gtk.ApplicationWindow):
 
                 if question["answers"][i] == question["correct"]:
                     button.add_css_class("correct")
+
+                if not question["answers"][i][0] == "":
+                    button.set_label(question["answers"][i][0])
+
+                if not question["answers"][i][1] == "":
+                    img = Gtk.Image().new_from_file(question["answers"][i][1])
+                    button.set_child(img)
 
                 answerGrid.attach(button, i % 2, i // 2, 1, 1)
 
@@ -173,7 +179,7 @@ class MainWindow(Gtk.ApplicationWindow):
             return
 
         correctAnswer = self.session.questions[self.currentQuestion]["correct"]
-        if button.get_name() == correctAnswer:
+        if button.get_name().split("|") == correctAnswer:
             self.scoreDisplayTracker[self.currentQuestion][0] += 1
             self.scoreDisplayTracker[self.currentQuestion][1].add_css_class("correct")
             self.correctAnswers += 1

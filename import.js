@@ -26,22 +26,56 @@ function addToFile({id, level, terms}) {
     let data = fs.readFileSync(`./${level}.json`, "utf8")
     let json = JSON.parse(data)
     let term = json.pools.find(t => t.id === id)
-    if (!term) {
-        let pool = {
-            id: id,
-            cards: []
-        }
-        for (var i = 0; i < terms.length; i++) {
-            const card = {
-                side1: terms[i].cardSides[0].media[0].plainText,
-                side2: terms[i].cardSides[1].media[0].plainText,
-                score: 0
-            }
-            pool.cards.push(card)
-        }
-        json.pools.push(pool)
+
+    if (term) {
+        // delete term from json
+        json.pools = json.pools.filter(t => t.id !== id)
+        console.log("deleted old term")
     }
+
+    let pool = {
+        id: id,
+        cards: []
+    }
+    for (var i = 0; i < terms.length; i++) {
+        if (terms[i].cardSides[0].media[1]?.url)
+            downloadImage(terms[i].cardSides[0].media[1].url, `./${level}`)
+                .then(r => console.log("downloaded image"))
+        if (terms[i].cardSides[1].media[1]?.url)
+            downloadImage(terms[i].cardSides[1].media[1].url, `./${level}`)
+                .then(r => console.log("downloaded image"))
+        const card = {
+            side1: terms[i].cardSides[0].media[0].plainText,
+            side2: terms[i].cardSides[1].media[0].plainText,
+            side1image: terms[i].cardSides[0].media[1]?.url ? __dirname + `/${level}/${terms[i].cardSides[0].media[1].url.split("/").pop()}` : "",
+            side2image: terms[i].cardSides[1].media[1]?.url ? __dirname + `/${level}/${terms[i].cardSides[1].media[1].url.split("/").pop()}` : "",
+            score: 0
+        }
+        pool.cards.push(card)
+    }
+    json.pools.push(pool)
+
     fs.writeFileSync(`./${level}.json`, JSON.stringify(json))
+}
+
+async function downloadImage(url, folderName) {
+    const fs = require("fs");
+    const {mkdir} = require("fs/promises");
+    const {Readable} = require('stream');
+    const {finished} = require('stream/promises');
+    const path = require("path");
+
+    try {
+        const res = await fetch(url);
+        const fileName = path.basename(url);
+        if (!fs.existsSync(folderName)) await mkdir(folderName); //Optional if you already have downloads directory
+        const destination = path.resolve("./" + folderName, fileName);
+        if (fs.existsSync(destination)) return;
+        const fileStream = fs.createWriteStream(destination, {flags: 'wx'});
+        await finished(Readable.fromWeb(res.body).pipe(fileStream));
+    } catch (err) {
+        console.log(err)
+    }
 }
 
 
@@ -66,13 +100,3 @@ parsedArgs.forEach(arg => {
         })
     }
 })
-
-// quizlet(5920504, "N3").then(r => addToFile(r))
-//
-// quizlet(182218890, "N5").then(r => addToFile(r))
-// quizlet(3013578, "N5").then(r => addToFile(r))
-// quizlet(496298421, "N5").then(r => addToFile(r))
-//
-// quizlet(121982607, "N4").then(r => addToFile(r))
-// quizlet(16963863, "N4").then(r => addToFile(r))
-// quizlet(319934698, "N4").then(r => addToFile(r))
