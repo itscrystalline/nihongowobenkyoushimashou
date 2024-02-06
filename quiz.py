@@ -159,7 +159,7 @@ class QuizSession:
         indexCount = 0
         cards = []
         for pool in self.loadedData:
-            if "id" in self.interpreted and pool["id"] != int(self.interpreted["id"]):
+            if "id" in self.interpreted and str(pool["id"]) not in self.interpreted["id"]:
                 self.debugPrint("Skipping pool", pool["id"], getLine())
                 continue
             for card in pool["cards"]:
@@ -170,7 +170,7 @@ class QuizSession:
                 else:
                     scores.append(2 + ((20 - (card["score"] + 10)) * 0.9))
         if not indices:
-            print(self.col(Fore.RED) + "No cards found for pool ID", self.interpreted["id"] + self.col(Fore.RESET))
+            print(self.col(Fore.RED) + "No cards found in pool ID list", str(self.interpreted["id"]) + self.col(Fore.RESET))
             quit(1)
         sumScores = sum(scores)
         weights = [(score / sumScores) * 100 for score in scores]
@@ -312,7 +312,7 @@ class QuizSession:
             elif argGroup[0] in ["--reverse-weights", "-r"]:
                 interpreted["reverseWeights"] = True
             elif argGroup[0] in ["--id", "-i"]:
-                interpreted["id"] = argGroup[1]
+                interpreted["id"] = argGroup[1:]
             else:
                 print("WARNING: Unknown argument:", argGroup[0], "Continuing...")
                 continue
