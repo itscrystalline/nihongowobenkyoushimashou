@@ -58,6 +58,11 @@ class QuizSession:
             file = result[0]
             numRandom = result[1]
 
+        if "id" in self.interpreted:
+            if "file" not in self.interpreted:
+                print(self.col(Fore.RED) + "No file specified, ignoring pool ID!" + self.col(Fore.RESET))
+                self.interpreted.pop("id")
+
         # load the json file
         self.debugPrint("Loading", file, "with", numRandom, "random cards", getLine())
         print(self.col(Fore.CYAN), "=========>", file[:-5], f"({numRandom} questions)", "<=========")
@@ -154,6 +159,9 @@ class QuizSession:
         indexCount = 0
         cards = []
         for pool in self.loadedData:
+            if "id" in self.interpreted and pool["id"] != int(self.interpreted["id"]):
+                self.debugPrint("Skipping pool", pool["id"], getLine())
+                continue
             for card in pool["cards"]:
                 indices.append(indexCount)
                 indexCount += 1
@@ -161,6 +169,9 @@ class QuizSession:
                     scores.append(2 + ((card["score"] + 10) * 0.9))
                 else:
                     scores.append(2 + ((20 - (card["score"] + 10)) * 0.9))
+        if not indices:
+            print(self.col(Fore.RED) + "No cards found for pool ID", self.interpreted["id"] + self.col(Fore.RESET))
+            quit(1)
         sumScores = sum(scores)
         weights = [(score / sumScores) * 100 for score in scores]
         self.debugPrint("Scores:", scores, getLine())
@@ -256,6 +267,8 @@ class QuizSession:
                 print("  --dry-run: Do not save any changes. If --clear is specified, this will be ignored.")
                 print("  --reverse-weights, -r: Reverse the weights for the random card selection. This will make "
                       "cards with higher scores more likely to be chosen.")
+                print(
+                    "  --id, -i: Use cards from a specific pool/set ID. if --file is not specified, this will be ignored.")
                 quit(0)
             elif argGroup[0] in ["--dir", "-D"]:
                 if len(argGroup) < 2:
@@ -298,6 +311,8 @@ class QuizSession:
                 interpreted["dryRun"] = True
             elif argGroup[0] in ["--reverse-weights", "-r"]:
                 interpreted["reverseWeights"] = True
+            elif argGroup[0] in ["--id", "-i"]:
+                interpreted["id"] = argGroup[1]
             else:
                 print("WARNING: Unknown argument:", argGroup[0], "Continuing...")
                 continue
